@@ -13,8 +13,12 @@ public class FileEditor extends JDialog {
     private JButton buttonOpen;
     private JButton buttonClose;
     private JButton buttonSave;
-    private JTextArea textArea;
-    private JButton buttonGetSelection;
+    private JTextArea textAreaTop;
+    private JButton topBottom;
+    private JButton openBottomButton;
+    private JTextArea textAreaBottom;
+    private JButton bottomTop;
+    private JButton saveBottomButton;
     String directory; // The default directory to display in the FileDialog
     String selection;
     public FileEditor() {
@@ -29,7 +33,7 @@ public class FileEditor extends JDialog {
         });
         buttonSave.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                onButtonSave();
+                onSaveTop();
             }
         });
         buttonClose.addActionListener(new ActionListener() {
@@ -37,10 +41,23 @@ public class FileEditor extends JDialog {
                 onButtonClose();
             }
         });
-        buttonGetSelection.addActionListener(new ActionListener() {
+        topBottom.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                onButtonGetSelection();
+                onButtonTopBottom();
             }
+        });
+        bottomTop.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onButtonBottomTop();
+            }
+        });
+        openBottomButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onButtonBottomOpen();
+            }
+        });
+        saveBottomButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) { onSaveBottom(); }
         });
 
         // call onCancel() when cross is clicked
@@ -59,7 +76,7 @@ public class FileEditor extends JDialog {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    public void saveFile(String directory, String filename) {
+    public void saveFile(String directory, String filename, JTextArea txtArea) {
         if ((filename == null) || (filename.length() == 0))
             return;
         File file;
@@ -67,13 +84,13 @@ public class FileEditor extends JDialog {
         try {
             file = new File(directory, filename); // Create a file object
             out = new FileWriter(file); // And a char stream to write it
-            textArea.getLineCount(); // Get text from the text area
-            String s = textArea.getText();
+            txtArea.getLineCount(); // Get text from the text area
+            String s = txtArea.getText();
             out.write(s);
         }
         // Display messages if something goes wrong
         catch (IOException e) {
-            textArea.setText(e.getClass().getName() + ": " + e.getMessage());
+            txtArea.setText(e.getClass().getName() + ": " + e.getMessage());
             this.setTitle("FileViewer: " + filename + ": I/O Exception");
         }
         // Always be sure to close the input stream!
@@ -87,7 +104,7 @@ public class FileEditor extends JDialog {
         }
     }
 
-    public void loadAndDisplayFile(String directory, String filename) {
+    public void loadAndDisplayFile(String directory, String filename, JTextArea txtArea) {
         if ((filename == null) || (filename.length() == 0))
             return;
         File file;
@@ -99,17 +116,17 @@ public class FileEditor extends JDialog {
             in = new FileReader(file); // And a char stream to read it
             char[] buffer = new char[4096]; // Read 4K characters at a time
             int len; // How many chars read each time
-            textArea.setText(""); // Clear the text area
+            txtArea.setText(""); // Clear the text area
             while ((len = in.read(buffer)) != -1) { // Read a batch of chars
                 String s = new String(buffer, 0, len); // Convert to a string
-                textArea.append(s); // And display them
+                txtArea.append(s); // And display them
             }
             this.setTitle("FileViewer: " + filename); // Set the window title
-            textArea.setCaretPosition(0); // Go to start of file
+            txtArea.setCaretPosition(0); // Go to start of file
         }
         // Display messages if something goes wrong
         catch (IOException e) {
-            textArea.setText(e.getClass().getName() + ": " + e.getMessage());
+            txtArea.setText(e.getClass().getName() + ": " + e.getMessage());
             this.setTitle("FileViewer: " + filename + ": I/O Exception");
         }
         // Always be sure to close the input stream!
@@ -122,6 +139,7 @@ public class FileEditor extends JDialog {
         }
     }
 
+    // !!
     private void onButtonOpen() {
         // Create a file dialog box to prompt for a new file to display
         FileDialog f = new FileDialog(this, "Otvori fajl", FileDialog.LOAD);
@@ -129,18 +147,40 @@ public class FileEditor extends JDialog {
         // Display the dialog and wait for the user's response
         f.setVisible(true);
         directory = f.getDirectory(); // Remember new default directory
-        loadAndDisplayFile(directory, f.getFile()); // Load and display selection
+        loadAndDisplayFile(directory, f.getFile(), textAreaTop); // Load and display selection
         f.dispose(); // Get rid of the dialog box
     }
 
-    private void onButtonSave() {
+    private void onButtonBottomOpen() {
+        // Create a file dialog box to prompt for a new file to display
+        FileDialog f = new FileDialog(this, "Otvori fajl", FileDialog.LOAD);
+        f.setDirectory(directory); // Set the default directory
+        // Display the dialog and wait for the user's response
+        f.setVisible(true);
+        directory = f.getDirectory(); // Remember new default directory
+        loadAndDisplayFile(directory, f.getFile(), textAreaBottom); // Load and display selection
+        f.dispose(); // Get rid of the dialog box
+    }
+
+    private void onSaveBottom() {
         // Create a file dialog box to prompt for a new file to display
         FileDialog f = new FileDialog(this, "Otvori fajl", FileDialog.SAVE);
         f.setDirectory(directory); // Set the default directory
         // Display the dialog and wait for the user's response
         f.setVisible(true);
         directory = f.getDirectory(); // Remember new default directory
-        saveFile(directory, f.getFile()); // Load and display selection
+        saveFile(directory, f.getFile(), textAreaBottom); // Load and display selection
+        f.dispose(); // Get rid of the dialog box
+    }
+
+    private void onSaveTop() {
+        // Create a file dialog box to prompt for a new file to display
+        FileDialog f = new FileDialog(this, "Otvori fajl", FileDialog.SAVE);
+        f.setDirectory(directory); // Set the default directory
+        // Display the dialog and wait for the user's response
+        f.setVisible(true);
+        directory = f.getDirectory(); // Remember new default directory
+        saveFile(directory, f.getFile(), textAreaTop); // Load and display selection
         f.dispose(); // Get rid of the dialog box
     }
 
@@ -149,9 +189,16 @@ public class FileEditor extends JDialog {
         dispose();
     }
 
-    private void onButtonGetSelection()
+    private void onButtonTopBottom()
     {
-        selection = textArea.getSelectedText();
+        String text = textAreaBottom.getText() + "\n" + textAreaTop.getText();
+        textAreaBottom.setText(text);
+    }
+
+    private void onButtonBottomTop()
+    {
+        String text = textAreaTop.getText() + "\n" + textAreaBottom.getText();
+        textAreaTop.setText(text);
     }
 
     public static void main(String[] args) {
